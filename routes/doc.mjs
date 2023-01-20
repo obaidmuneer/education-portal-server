@@ -46,6 +46,25 @@ router.post('/', async (req, res) => {
 
 })
 
+router.get('/:classId', async (req, res) => {
+    const page = req.query.page || 0
+    try {
+        const docs = await docModel.find({ classId: req.params.classId }, {}, {
+            sort: { '_id': -1 },
+            limit: 20,
+            skip: page
+        })
+        res.status(200).send({
+            messege: 'docs fetched successfully',
+            docs
+        })
+    } catch (err) {
+        res.status(500).send({
+            messege: 'failed to fetch docs'
+        })
+    }
+})
+
 router.put('/:id', async (req, res) => {
     const schema = Joi.object({
         text: Joi.string().min(3).required(),
