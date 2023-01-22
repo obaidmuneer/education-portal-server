@@ -1,6 +1,9 @@
 import express from "express";
 import Joi from 'joi'
+import bucket from "../firebase/index.mjs";
+import upload from "../middlewares/multerConfig.mjs";
 import docModel from '../models/docModel.mjs'
+import fs from 'fs'
 
 const router = express.Router()
 
@@ -25,7 +28,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     const schema = Joi.object({
-        text: Joi.string().min(3),
+        text: Joi.string().min(3).required(),
         contentType: Joi.string().required(),
         classId: Joi.string().required(),
     })
@@ -46,12 +49,88 @@ router.post('/', async (req, res) => {
 
 })
 
+router.post('/code', async (req, res) => {
+    const schema = Joi.object({
+        codeTitle: Joi.string().min(3).required(),
+        codeBlock: Joi.string().min(3).required(),
+        codeLang: Joi.string().required(),
+        contentType: Joi.string().required(),
+        classId: Joi.string().required(),
+    })
+    try {
+        const { codeTitle, codeBlock, codeLang, contentType, classId } = await schema.validateAsync(req.body);
+        const doc = await docModel.create({ codeTitle, codeBlock, codeLang, contentType, classId })
+        res.status(200).send({
+            messege: 'doc added successfully',
+            doc
+        })
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).send({
+            messege: err.messege
+        })
+    }
+
+})
+
+router.post('/file', upload.any(), async (req, res) => {
+    const schema = Joi.object({
+        // file: Joi.binary().required(),
+        title: Joi.string().required(),
+        contentType: Joi.string().required(),
+        classId: Joi.string().required(),
+    })
+    // console.log(req.body, req.files[0]);
+    try {
+        const { title, contentType, classId } = await schema.validateAsync(req.body);
+        bucket.upload(
+            req.files[0].path,
+            {
+                destination: `sysborgClone/${req.files[0].filename}`, // give destination name if you want to give a certain name to file in bucket, include date to make name unique otherwise it will replace previous file with the same name
+            },
+            function (err, file, apiResponse) {
+                if (!err) {
+                    file.getSignedUrl({
+                        action: 'read',
+                        expires: '03-09-2999'
+                    }).then(async (urlData, err) => {
+                        if (!err) {
+                            // console.log("public downloadable url: ", urlData[0]) // this is public downloadable url 
+                            try {
+                                fs.unlinkSync(req.files[0].path)
+                                //file removed
+                            } catch (err) {
+                                console.error(err)
+                            }
+                            const doc = await docModel.create({ file: urlData[0], title, contentType, classId })
+                            res.status(200).send({
+                                messege: 'doc added successfully',
+                                doc
+                            })
+                        }
+                    })
+                } else {
+                    console.log("err: ", err)
+                    res.status(500).send();
+                }
+            });
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).send({
+            messege: err.messege
+        })
+    }
+
+})
+
 router.get('/:classId', async (req, res) => {
     const page = req.query.page || 0
     try {
-        const docs = await docModel.find({ classId: req.params.classId }, {}, {
+        const docs = await docModel.find({ classId: req.params.classId, isDeleted: false }, {}, {
             sort: { '_id': -1 },
-            limit: 20,
+            limit: 40,
             skip: page
         })
         res.status(200).send({
@@ -93,7 +172,7 @@ router.delete('/:id', async (req, res) => {
         id: Joi.string().required()
     })
     try {
-        const { text, id } = await schema.validateAsync({ id: req.params.id });
+        const { id } = await schema.validateAsync({ id: req.params.id });
         const doc = await docModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true })
         res.status(200).send({
             messege: 'doc deleted successfully',
