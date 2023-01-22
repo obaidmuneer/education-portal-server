@@ -5,6 +5,10 @@ const docSchema = new Schema({
     classId: { type: String, required: true },
     contentType: { type: Object, required: true },
     file: { type: Object },
+    title: { type: String },
+    codeBlock: { type: String },
+    codeTitle: { type: String },
+    codeLang: { type: String },
     isDeleted: { type: Boolean, default: false },
     createdAt: { type: Date, defaul: Date.now }
 })
