@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose'
+import bcrypt from 'bcrypt'
 
 const portalUsersSchema = new Schema({
     firstName: { type: String, required: true },
@@ -7,6 +8,14 @@ const portalUsersSchema = new Schema({
     password: { type: String, required: true },
     isAdmin: { type: Boolean, default: false, required: true },
     createdAt: { type: Date, default: Date.now }
+})
+
+portalUsersSchema.pre('save', async function (next) {
+    if (this.isModified('password')) {
+        let hashPassword = await bcrypt.hash(this.password, 12)
+        this.password = hashPassword
+    }
+    next()
 })
 
 export default model('portalUsers', portalUsersSchema)
