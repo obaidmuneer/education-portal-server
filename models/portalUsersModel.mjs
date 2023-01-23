@@ -1,5 +1,8 @@
 import { Schema, model } from 'mongoose'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
+import * as dotenv from 'dotenv'
+dotenv.config()
 
 const portalUsersSchema = new Schema({
     firstName: { type: String, required: true },
@@ -9,6 +12,15 @@ const portalUsersSchema = new Schema({
     isAdmin: { type: Boolean, default: false, required: true },
     createdAt: { type: Date, default: Date.now }
 })
+
+portalUsersSchema.method.getToken = async function () {
+    try {
+        const token = await jwt.sign({ id: this._id, isAdmin: this.isAdmin }, process.env.SECRET_KEY);
+        return token
+    } catch (error) {
+        return error
+    }
+}
 
 portalUsersSchema.pre('save', async function (next) {
     if (this.isModified('password')) {
