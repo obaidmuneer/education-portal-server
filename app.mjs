@@ -3,6 +3,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import * as dotenv from 'dotenv'
 import docRoute from './routes/doc.mjs'
+import userRoute from './routes/user.mjs'
 
 const app = express()
 const port = process.env.PORT || 8080
@@ -21,6 +22,7 @@ app.get('/', async (req, res) => {
 })
 
 app.use('/api/v1/docs', docRoute)
+app.use('/api/v1/users', userRoute)
 
 ////////////////mongodb connected disconnected events///////////////////////////////////////////////
 mongoose.connection.on('connected', function () {//connected

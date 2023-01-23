@@ -10,7 +10,7 @@ const docSchema = new Schema({
     codeTitle: { type: String },
     codeLang: { type: String },
     isDeleted: { type: Boolean, default: false },
-    createdAt: { type: Date, defaul: Date.now }
+    createdAt: { type: Date, default: Date.now }
 })
 export default model('doc', docSchema)
 
