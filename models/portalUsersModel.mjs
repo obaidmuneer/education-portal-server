@@ -13,9 +13,14 @@ const portalUsersSchema = new Schema({
     createdAt: { type: Date, default: Date.now }
 })
 
-portalUsersSchema.method.getToken = async function () {
+portalUsersSchema.methods.getToken = async function () {
     try {
-        const token = await jwt.sign({ id: this._id, isAdmin: this.isAdmin }, process.env.SECRET_KEY);
+        const token = jwt.sign({
+            id: this._id,
+            isAdmin: this.isAdmin,
+            iat: Math.floor(Date.now() / 1000) - 30,
+            exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24)
+        }, process.env.SECRET_KEY);
         return token
     } catch (error) {
         return error
