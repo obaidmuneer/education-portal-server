@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import cookieParser from 'cookie-parser'
 import * as dotenv from 'dotenv'
 import docRoute from './routes/doc.mjs'
 import userRoute from './routes/user.mjs'
@@ -8,12 +9,18 @@ import userRoute from './routes/user.mjs'
 const app = express()
 const port = process.env.PORT || 8080
 
-app.use(cors())
+app.use(cookieParser())
+app.use(cors({
+    origin: ['http://localhost:3000', "https://react-sysborg-clone.web.app"],
+    credentials: true
+}))
 app.use(express.json())
 dotenv.config()
 
 const dbUri = process.env.DB_URI
+mongoose.set('strictQuery', true);
 mongoose.connect(dbUri)
+//https://stackoverflow.com/questions/74747476/deprecationwarning-mongoose-the-strictquery-option-will-be-switched-back-to
 
 app.get('/', async (req, res) => {
     res.status(200).send({
