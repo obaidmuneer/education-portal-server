@@ -153,9 +153,12 @@ router.put('/add-bookmark', auth, async (req, res) => {
     try {
         const { id } = await schema.validateAsync(req.body);
         const docs = await docModel.findOne({ _id: id, isDeleted: false })
+        const index = await req.user.bookmark.indexOf(docs._id)
+        if (index === -1) {
+            req.user.bookmark.push(docs._id.toString())
+            await req.user.save()
+        }
         // console.log(req.user);
-        req.user.bookmark.push(docs._id.toString())
-        await req.user.save()
         res.status(200).send({
             messege: 'Bookmarked Successfully',
             bookmark: req.user.bookmark
@@ -177,13 +180,14 @@ router.delete('/remove-bookmark/:id', auth, async (req, res) => {
     })
     try {
         const { id } = await schema.validateAsync(req.params);
-        // const docs = await docModel.findOne({ _id: id, isDeleted: false })
-        req.user.bookmark.forEach(async (eachBookmark, index) => {
-            if (eachBookmark.toString() === id) {
-                req.user.bookmark.splice(index, 1)
-                await req.user.save()
-            }
-        });
+        // console.log(req.user.bookmark.indexOf(id))
+        // const index = req.user.bookmark.indexOf(id)
+        // if (index > -1) {
+        //     req.user.bookmark.splice(index, 1)
+        //     await req.user.save()
+        // }
+        req.user.bookmark = req.user.bookmark.filter(eachBookmark => eachBookmark.toString() !== id)
+        await req.user.save()
         res.status(200).send({
             messege: 'Bookmarked Removed Successfully',
             bookmark: req.user.bookmark
