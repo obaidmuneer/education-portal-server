@@ -21,7 +21,7 @@ const auth = async (req, res, next) => {
             return
         }
         const user = await portalUsersModel.findOne({ _id: verifiedToken.id }, {}, {
-            select: 'firstName lastName email'
+            select: 'firstName lastName email bookmark'
         })
         // console.log(user);
         req.token = token

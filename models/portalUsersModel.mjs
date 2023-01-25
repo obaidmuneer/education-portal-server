@@ -9,6 +9,10 @@ const portalUsersSchema = new Schema({
     lastName: { type: String, required: true },
     email: { type: String, unique: true, required: true },
     password: { type: String, required: true },
+    bookmark: [{
+        type: Schema.Types.ObjectId,
+        ref: 'doc' //name of the target collection
+    }],
     isAdmin: { type: Boolean, default: false, required: true },
     createdAt: { type: Date, default: Date.now }
 })

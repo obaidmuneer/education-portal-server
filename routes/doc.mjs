@@ -4,6 +4,7 @@ import bucket from "../firebase/index.mjs";
 import upload from "../middlewares/multerConfig.mjs";
 import docModel from '../models/docModel.mjs'
 import fs from 'fs'
+import auth from "../middlewares/auth.mjs";
 
 const router = express.Router()
 
@@ -140,6 +141,58 @@ router.get('/:classId', async (req, res) => {
     } catch (err) {
         res.status(500).send({
             messege: 'failed to fetch docs'
+        })
+    }
+})
+
+router.put('/add-bookmark', auth, async (req, res) => {
+    // console.log(req.body);
+    const schema = Joi.object({
+        id: Joi.string().required(),
+    })
+    try {
+        const { id } = await schema.validateAsync(req.body);
+        const docs = await docModel.findOne({ _id: id, isDeleted: false })
+        // console.log(req.user);
+        req.user.bookmark.push(docs._id.toString())
+        await req.user.save()
+        res.status(200).send({
+            messege: 'Bookmarked Successfully',
+            bookmark: req.user.bookmark
+        })
+
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).send({
+            messege: err.messege
+        })
+    }
+})
+
+router.delete('/remove-bookmark/:id', auth, async (req, res) => {
+    // console.log(req.body);
+    const schema = Joi.object({
+        id: Joi.string().required(),
+    })
+    try {
+        const { id } = await schema.validateAsync(req.params);
+        // const docs = await docModel.findOne({ _id: id, isDeleted: false })
+        req.user.bookmark.forEach(async (eachBookmark, index) => {
+            if (eachBookmark.toString() === id) {
+                req.user.bookmark.splice(index, 1)
+                await req.user.save()
+            }
+        });
+        res.status(200).send({
+            messege: 'Bookmarked Removed Successfully',
+            bookmark: req.user.bookmark
+        })
+    }
+    catch (err) {
+        console.log(err);
+        res.status(400).send({
+            messege: err.messege
         })
     }
 })

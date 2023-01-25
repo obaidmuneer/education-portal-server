@@ -7,6 +7,7 @@ import auth from "../middlewares/auth.mjs";
 const router = express.Router();
 
 router.post('/signup', async (req, res) => {
+    // console.log(req.body);
     try {
         const { firstName, lastName, email, password, confirmPassword } = req.body
         if (password !== confirmPassword) {
