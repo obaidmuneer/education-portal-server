@@ -93,7 +93,8 @@ router.get('/logout', auth, (req, res) => {
     })
 })
 
-router.get('/profile', auth, (req, res) => {
+router.get('/profile', auth, async (req, res) => {
+    await req.user.populate('bookmark');
     res.send({
         message: 'User Logged in',
         user: req.user

@@ -158,6 +158,7 @@ router.put('/add-bookmark', auth, async (req, res) => {
             req.user.bookmark.push(docs._id.toString())
             await req.user.save()
         }
+        await req.user.populate('bookmark')
         // console.log(req.user);
         res.status(200).send({
             messege: 'Bookmarked Successfully',
@@ -188,6 +189,7 @@ router.delete('/remove-bookmark/:id', auth, async (req, res) => {
         // }
         req.user.bookmark = req.user.bookmark.filter(eachBookmark => eachBookmark.toString() !== id)
         await req.user.save()
+        await req.user.populate('bookmark')
         res.status(200).send({
             messege: 'Bookmarked Removed Successfully',
             bookmark: req.user.bookmark
