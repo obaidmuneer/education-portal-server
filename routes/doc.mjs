@@ -136,6 +136,7 @@ router.get('/:classId', async (req, res) => {
         })
         res.status(200).send({
             messege: 'docs fetched successfully',
+            ip: req.ip,
             docs
         })
     } catch (err) {

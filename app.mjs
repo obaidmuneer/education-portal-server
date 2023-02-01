@@ -16,6 +16,7 @@ app.use(cors({
 }))
 app.use(express.json())
 dotenv.config()
+app.set('trust proxy', true)
 
 const dbUri = process.env.DB_URI
 mongoose.set('strictQuery', true);
