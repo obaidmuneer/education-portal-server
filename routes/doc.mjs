@@ -104,7 +104,8 @@ router.post('/file', upload.any(), async (req, res) => {
                             } catch (err) {
                                 console.error(err)
                             }
-                            const doc = await docModel.create({ file: urlData[0], title, contentType, classId })
+                            // console.log(urlData);
+                            const doc = await docModel.create({ file: urlData[0], fileName: req.files[0].filename, title, contentType, classId })
                             res.status(200).send({
                                 messege: 'doc added successfully',
                                 doc
@@ -233,13 +234,21 @@ router.delete('/:id', async (req, res) => {
     })
     try {
         const { id } = await schema.validateAsync({ id: req.params.id });
-        const doc = await docModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true })
+        // const doc = await docModel.findByIdAndUpdate(id, { isDeleted: false }, { new: true })
+        const doc = await docModel.findById(id)
+        // console.log(doc);
+        if (doc.contentType === 'file') {
+            await bucket.file(`sysborgClone/${doc.fileName}`).delete();
+        }
+        doc.isDeleted = true
+        await doc.save();
         res.status(200).send({
             messege: 'doc deleted successfully',
             doc
         })
     }
     catch (err) {
+        console.log(err);
         res.status(400).send({
             messege: err.messege
         })
