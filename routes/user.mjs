@@ -60,6 +60,7 @@ router.post('/signin', async (req, res) => {
         if (!isMatch) throw new Error('Bad email or password')
 
         const token = await user.getToken()
+        await user.populate('bookmark');
         res.cookie('token', token, {
             expires: new Date(Date.now() + 1000 * 60 * 60),
             httpOnly: true,
@@ -73,6 +74,7 @@ router.post('/signin', async (req, res) => {
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
+            bookmark: user.bookmark
         })
     } catch (error) {
         console.log(error)
