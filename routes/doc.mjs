@@ -1,14 +1,19 @@
 import express from "express";
+import bcrypt from "bcrypt";
 import Joi from 'joi'
+import fs from 'fs'
+import * as dotenv from 'dotenv'
+
 import bucket from "../firebase/index.mjs";
 import upload from "../middlewares/multerConfig.mjs";
 import docModel from '../models/docModel.mjs'
-import fs from 'fs'
 import auth from "../middlewares/auth.mjs";
 
 const router = express.Router()
+dotenv.config()
 
 router.get('/', async (req, res) => {
+    console.log(req.query);
     const page = req.query.page || 0
     try {
         const docs = await docModel.find({}, {}, {
@@ -35,7 +40,7 @@ router.post('/', async (req, res) => {
     })
     try {
         const { text, contentType, classId } = await schema.validateAsync(req.body);
-        const doc = await docModel.create({ text, contentType, classId })
+        const doc = await docModel.create({ text, contentType, classId, ip: req.ip, })
         res.status(200).send({
             messege: 'doc added successfully',
             doc
@@ -60,7 +65,14 @@ router.post('/code', async (req, res) => {
     })
     try {
         const { codeTitle, codeBlock, codeLang, contentType, classId } = await schema.validateAsync(req.body);
-        const doc = await docModel.create({ codeTitle, codeBlock, codeLang, contentType, classId })
+        const doc = await docModel.create({
+            codeTitle,
+            codeBlock,
+            codeLang,
+            contentType,
+            classId,
+            ip: req.ip,
+        })
         res.status(200).send({
             messege: 'doc added successfully',
             doc
@@ -105,7 +117,14 @@ router.post('/file', upload.any(), async (req, res) => {
                                 console.error(err)
                             }
                             // console.log(urlData);
-                            const doc = await docModel.create({ file: urlData[0], fileName: req.files[0].filename, title, contentType, classId })
+                            const doc = await docModel.create({
+                                file: urlData[0],
+                                fileName: req.files[0].filename,
+                                title,
+                                contentType,
+                                classId,
+                                ip: req.ip
+                            })
                             res.status(200).send({
                                 messege: 'doc added successfully',
                                 doc
@@ -230,10 +249,18 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     const schema = Joi.object({
-        id: Joi.string().required()
+        id: Joi.string().required(),
+        password: Joi.string().required()
     })
     try {
-        const { id } = await schema.validateAsync({ id: req.params.id });
+        const { id, password } = await schema.validateAsync({ id: req.params.id, password: req.body.password });
+        const isMatch = await bcrypt.compare(password, process.env.DELETE_PASSWORD)
+        if (!isMatch) {
+            res.status(401).send({
+                messsage: 'Bad credentials'
+            })
+            return
+        }
         // const doc = await docModel.findByIdAndUpdate(id, { isDeleted: false }, { new: true })
         const doc = await docModel.findById(id)
         // console.log(doc);
@@ -259,12 +286,22 @@ router.delete('/', async (req, res) => {
     const schema = Joi.object({
         classId: Joi.string().required(),
         contentType: Joi.string().required(),
+        password: Joi.string().required()
     })
     try {
-        const { classId, contentType } = await schema.validateAsync({
+        const { classId, contentType, password } = await schema.validateAsync({
             classId: req.body.classId,
-            contentTypes: req.body.contentType
+            contentTypes: req.body.contentType,
+            password: req.body.password
         });
+        const isMatch = await bcrypt.compare(password, process.env.DELETE_PASSWORD)
+        if (!isMatch) {
+            res.status(401).send({
+                messsage: 'Bad credentials'
+            })
+            return
+        }
+
         const docs = await docModel.updateMany({ classId, contentType }, { isDeleted: true }, { new: true })
         // sysborgModel.deleteMany()
         res.status(200).send({
