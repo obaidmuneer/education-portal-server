@@ -151,9 +151,11 @@ router.get('/:classId', async (req, res) => {
     try {
         const docs = await docModel.find({ classId: req.params.classId, isDeleted: false }, {}, {
             sort: { '_id': -1 },
-            limit: 40,
-            skip: page
+            // limit: 40,
+            // skip: page
         })
+        // console.log(docs);
+        // console.log(page);
         res.status(200).send({
             messege: 'docs fetched successfully',
             ip: req.ip,
@@ -291,7 +293,7 @@ router.delete('/', async (req, res) => {
     try {
         const { classId, contentType, password } = await schema.validateAsync({
             classId: req.body.classId,
-            contentTypes: req.body.contentType,
+            contentType: req.body.contentType,
             password: req.body.password
         });
         const isMatch = await bcrypt.compare(password, process.env.DELETE_PASSWORD)
@@ -302,8 +304,10 @@ router.delete('/', async (req, res) => {
             return
         }
 
-        const docs = await docModel.updateMany({ classId, contentType }, { isDeleted: true }, { new: true })
-        // sysborgModel.deleteMany()
+        // const docs = await docModel.updateMany({ classId, contentType }, { isDeleted: true }, { new: true })
+        await docModel.deleteMany({ classId, contentType }, { new: true })
+        const docs = await docModel.find({ classId, isDeleted: false })
+        // console.log(docs);
         res.status(200).send({
             messege: 'doc deleted successfully',
             docs
